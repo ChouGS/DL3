@@ -8,20 +8,20 @@ import os
 
 from data import SwissRollDataset
 from wasserstein import SlicedWS
-from model import SWAutoEncoder
+from model_sk import SWAutoEncoder
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 # Hyperparameters
 N = 2500            # Number of data points
 L = 512             # Number of slices
-EPOCH = 100         # Number of epochs
-BSIZE = 100         # Batch size
-EPS = 0.01       # Loss normalization coefficient
+EPOCH = 300         # Number of epochs
+BSIZE = 2500          # Batch size
+EPS = 1        # Loss normalization coefficient
 
 # Dataset
 dataset = SwissRollDataset(N)
-dataloader = DataLoader(dataset, batch_size=100, shuffle=False)
+dataloader = DataLoader(dataset, batch_size=BSIZE, shuffle=False)
 
 # Model
 ae = SWAutoEncoder(3, 2)
@@ -80,6 +80,13 @@ plot.plot(x, y2, 'g-')
 plot.legend(['distribution loss * 0.01'])
 plot.savefig('./loss.png')
 
+# Plot encoded data
+full_data = dataset[:]
+z_final = ae.encode(full_data)
+fig = plot.figure()
+plot.scatter(z_final[:, 0], z_final[:, 1])
+plot.savefig('./distribution.png')
+
 # Testing - use decoder to generte Swiss roll
 z_test = torch.randn(N, 2)
 generated_data = ae.decode(z_test)
@@ -89,10 +96,10 @@ fig = plot.figure()
 ax = fig.add_subplot(projection='3d')
 ax.scatter(generated_data[:, 0], generated_data[:, 1], generated_data[:, 2], marker='o')
 ax.set_title('Generated data')
-plot.savefig('generated.png')
+plot.savefig('./generated.png')
 
 fig = plot.figure()
 ax = fig.add_subplot(projection='3d')
 ax.scatter(dataset[:, 0], dataset[:, 1], dataset[:, 2], marker='o')
 ax.set_title('Original data')
-plot.savefig('original.png')
+plot.savefig('./original.png')

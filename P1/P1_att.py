@@ -52,5 +52,7 @@ if __name__ == '__main__':
     index = np.arange(loss_log.shape[0])
 
     plot.plot(index, loss_log, 'b-')
+    plot.xlabel('Iters')
+    plot.ylabel('log(loss + 1)')
     plot.title('Training Loss Curve for P1')
     plot.savefig('Loss.png')
