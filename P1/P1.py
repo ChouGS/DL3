@@ -3,17 +3,17 @@ import torch
 from matplotlib import pyplot as plot
 import os
 
-from model import SetNet, MessagePassing
+from model import SetNet
 from data import get_data
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 if __name__ == '__main__':
-    model = MessagePassing()
+    model = SetNet()
     training_num = 900
     testing_num = 100
 
-    optimizer = torch.optim.Adam(model.parameters(), 0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
     loss = torch.nn.MSELoss()
     loss_log = []
 
@@ -23,6 +23,8 @@ if __name__ == '__main__':
         # training
         for i in range(training_num):
             iter_data, iter_label = get_data()
+            iter_data = iter_data.unsqueeze(0)
+            iter_label = iter_label.unsqueeze(0)
             logit = model(iter_data)
             loss_val = loss(logit, iter_label)
             optimizer.zero_grad()
@@ -37,6 +39,8 @@ if __name__ == '__main__':
         # testing
         for i in range(testing_num):
             iter_data, iter_label = get_data()
+            iter_data = iter_data.unsqueeze(0)
+            iter_label = iter_label.unsqueeze(0)
             logit = model(iter_data)
             test_eval_items.append(loss(logit, iter_label))
         
@@ -44,9 +48,11 @@ if __name__ == '__main__':
 
         print(f'\nTesting: avg loss={avg_eval_loss}\n')
 
-    loss_log = np.array(loss_log[1:])
+    loss_log = np.log10(np.array(loss_log))
     index = np.arange(loss_log.shape[0])
 
     plot.plot(index, loss_log, 'b-')
-    plot.title('Training Loss Curve for P1')
+    plot.ylabel('Logged Loss')
+    plot.xlabel('Iter')
+    plot.title('Training Loss Curve for P1 (Logged)')
     plot.savefig('Loss.png')

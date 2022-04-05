@@ -17,7 +17,7 @@ N = 2500            # Number of data points
 L = 512             # Number of slices
 EPOCH = 100         # Number of epochs
 BSIZE = 100         # Batch size
-EPS = 0.00001       # Loss normalization coefficient
+EPS = 0.01       # Loss normalization coefficient
 
 # Dataset
 dataset = SwissRollDataset(N)
