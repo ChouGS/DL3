@@ -7,17 +7,17 @@ from matplotlib import pyplot as plot
 import os
 
 from data import SwissRollDataset
-from wasserstein import SlicedWS
-from model_sk import SWAutoEncoder
+from loss import SlicedWSLoss
+from model import SWAutoEncoder
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 # Hyperparameters
 N = 2500            # Number of data points
 L = 512             # Number of slices
-EPOCH = 300         # Number of epochs
-BSIZE = 2500          # Batch size
-EPS = 1        # Loss normalization coefficient
+EPOCH = 200         # Number of epochs
+BSIZE = 100         # Batch size
+EPS = 0.05         # Loss normalization coefficient
 
 # Dataset
 dataset = SwissRollDataset(N)
@@ -30,7 +30,7 @@ ae = SWAutoEncoder(3, 2)
 rec_loss = nn.MSELoss()
 
 # Prior-posterior loss
-pp_loss = SlicedWS(L)
+pp_loss = SlicedWSLoss(L)
 
 # Optimizer
 optim = torch.optim.Adam(ae.parameters(), lr=0.005)
@@ -77,15 +77,16 @@ plot.plot(x, y1, 'b-')
 plot.legend(['reconstruction loss'])
 plot.subplot(1, 2, 2)
 plot.plot(x, y2, 'g-')
-plot.legend(['distribution loss * 0.01'])
-plot.savefig('./loss.png')
+plot.legend([f'distribution loss * {EPS}'])
+plot.savefig('SWAE/loss.png')
 
 # Plot encoded data
 full_data = dataset[:]
 z_final = ae.encode(full_data)
 fig = plot.figure()
 plot.scatter(z_final[:, 0], z_final[:, 1])
-plot.savefig('./distribution.png')
+plot.title('Encoded distribution')
+plot.savefig('SWAE/distribution.png')
 
 # Testing - use decoder to generte Swiss roll
 z_test = torch.randn(N, 2)
@@ -96,10 +97,10 @@ fig = plot.figure()
 ax = fig.add_subplot(projection='3d')
 ax.scatter(generated_data[:, 0], generated_data[:, 1], generated_data[:, 2], marker='o')
 ax.set_title('Generated data')
-plot.savefig('./generated.png')
+plot.savefig('SWAE/generated.png')
 
 fig = plot.figure()
 ax = fig.add_subplot(projection='3d')
 ax.scatter(dataset[:, 0], dataset[:, 1], dataset[:, 2], marker='o')
 ax.set_title('Original data')
-plot.savefig('./original.png')
+plot.savefig('SWAE/original.png')
