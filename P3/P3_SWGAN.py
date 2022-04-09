@@ -43,14 +43,16 @@ for e in range(EPOCH):
         # forward
         x_gen = G_model(z)
         
+        # Sliced Wasserstein loss
         gen_loss = pp_loss(x_gen, data)
 
+        # backward
         G_optim.zero_grad()
         gen_loss.backward()
         G_optim.step()
         g_loss.append(gen_loss.item())
 
-        # print status
+        # logging
         print(f'Epoch {e} {i * BSIZE}/{len(dataset)}:', 
               f'G_loss={round(gen_loss.item(), 4)}')
 
@@ -60,6 +62,8 @@ y = np.array(g_loss)
 
 plot.figure()
 plot.plot(x, y, 'b-')
+plot.xlabel('Iter')
+plot.ylabel('Loss_val')
 plot.legend(['Generator loss'])
 plot.savefig('SWGAN/loss.png')
 

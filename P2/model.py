@@ -64,6 +64,7 @@ class SWAutoEncoder(nn.Module):
         return z, x_rec
 
     def encode(self, x):
+        # Method for test-only execution
         return self.encoder(x).detach().numpy()
 
     def decode(self, x: torch.Tensor):
@@ -77,6 +78,7 @@ class VEncoder(nn.Module):
         self.out_dim = out_dim
         latent_dim = [in_dim] + latent_dim
         
+        # Latent part
         self.fcs = []
         for i in range(1, len(latent_dim) - 1):
             self.fcs.append((f'bn{i}', nn.BatchNorm1d(latent_dim[i-1])))
@@ -84,12 +86,14 @@ class VEncoder(nn.Module):
             self.fcs.append((f'relu{i}', nn.LeakyReLU(0.2)))
         self.fc = nn.Sequential(OrderedDict(self.fcs))
 
+        # Mu output branch
         self.mus = [('mu_bn', nn.BatchNorm1d(latent_dim[-2])),
                     ('mu1', nn.Linear(latent_dim[-2], latent_dim[-1])),
                     ('mu_relu', nn.LeakyReLU(0.2)),
                     ('mu2', nn.Linear(latent_dim[-1], out_dim))]
         self.mu = nn.Sequential(OrderedDict(self.mus))
 
+        # Sigma output branch
         self.sigmas = [('sigma_bn', nn.BatchNorm1d(latent_dim[-2])),
                        ('sigma1', nn.Linear(latent_dim[-2], latent_dim[-1])),
                        ('sigma_relu', nn.LeakyReLU(0.2)),
@@ -103,6 +107,7 @@ class VEncoder(nn.Module):
         return mu, sigma
 
     def reparametrize(self, bsize, mu, sigma):
+        # Generate normal distribution using learned mu and sigma
         z = torch.randn(bsize, self.out_dim)
         return z * torch.exp(0.5 * sigma) + mu
 
@@ -113,6 +118,7 @@ class VDecoder(nn.Module):
         self.out_dim = out_dim
         latent_dim = [in_dim] + latent_dim
 
+        # Latent part
         self.fcs = []
         for i in range(1, len(latent_dim) - 1):
             self.fcs.append((f'bn{i}', nn.BatchNorm1d(latent_dim[i-1])))
@@ -120,12 +126,14 @@ class VDecoder(nn.Module):
             self.fcs.append((f'relu{i}', nn.LeakyReLU(0.2)))
         self.fc = nn.Sequential(OrderedDict(self.fcs))
 
+        # Mu output branch
         self.mus = [('mu_bn', nn.BatchNorm1d(latent_dim[-2])),
                     ('mu1', nn.Linear(latent_dim[-2], latent_dim[-1])),
                     ('mu_relu', nn.LeakyReLU(0.2)),
                     ('mu2', nn.Linear(latent_dim[-1], out_dim))]
         self.mu = nn.Sequential(OrderedDict(self.mus))
 
+        # Sigma output branch
         self.sigmas = [('sigma_bn', nn.BatchNorm1d(latent_dim[-2])),
                        ('sigma1', nn.Linear(latent_dim[-2], latent_dim[-1])),
                        ('sigma_relu', nn.LeakyReLU(0.2)),
@@ -139,6 +147,7 @@ class VDecoder(nn.Module):
         return mu, sigma
 
     def reparametrize(self, bsize, mu, sigma):
+        # Generate normal distribution using learned mu and sigma
         z = torch.randn(bsize, self.out_dim)
         return z * torch.exp(0.5 * sigma) + mu
 
@@ -157,6 +166,7 @@ class VariationalAutoEncoder(nn.Module):
         return mu_z, sigma_z, z, x_rec
 
     def encode(self, x):
+        # Method for test-only execution
         bsize = x.shape[0]
         mu_z, sigma_z = self.encoder(x)
         z_encoded = self.encoder.reparametrize(bsize, mu_z, sigma_z)

@@ -5,6 +5,7 @@ import sklearn.datasets as dataset
 class SwissRollDataset(Dataset):
     def __init__(self, N) -> None:
         super(SwissRollDataset, self).__init__()
+        # Build Swiss roll dataset
         data, _ = dataset.make_swiss_roll(N)
         self.data = torch.Tensor(data)
     

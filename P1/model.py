@@ -1,20 +1,6 @@
 from collections import OrderedDict
-from turtle import forward
 import torch
 import torch.nn as nn
-
-class SetNet(nn.Module):
-    def __init__(self, num_layers=9) -> None:
-        super(SetNet, self).__init__()
-        self.model = torch.nn.Sequential(
-            OrderedDict([(f'mp{i}', MessagePassingBlock()) for i in range(num_layers)] + \
-                        [('readout', ReadoutBlock())]))
-    
-    def forward(self, x):
-        for layer in self.model:
-            x = layer(x)
-        
-        return x
 
 class SetNetAttention(nn.Module):
     def __init__(self, latent_dim) -> None:
@@ -27,38 +13,19 @@ class SetNetAttention(nn.Module):
         self.outp = nn.Sequential(OrderedDict([(f'outp', nn.Conv1d(latent_dim[-1] * 2, 1, 1))]))
 
     def forward(self, x):
-        q = self.q(x)
-        k = self.k(x)
-        v = self.v(x)
+        # q, k, v as in the attention layer
+        q = self.q(x).unsqueeze(1)
+        k = self.k(x).unsqueeze(1)
+        v = self.v(x).unsqueeze(1)
+        
+        # Multi-head attention
         att, _ = self.attention(q, k, v)
-        att_mean = torch.mean(att, 0)
-        att_mean = torch.stack([att_mean for _ in range(att.shape[0])], 1).transpose(1, 0)
-        att = torch.cat([att, att_mean], 1).transpose(1, 0)
-        outp = torch.mean(self.outp(att), 1)
+
+        # Average and concatenation
+        att_mean = torch.mean(att, 0, keepdim=True).repeat(att.shape[0], 1, 1)
+        att = torch.cat([att, att_mean], -1).squeeze().transpose(1, 0).unsqueeze(0)
+
+        # 1x1 conv and average again
+        outp = torch.mean(self.outp(att))
+
         return outp
-
-class MessagePassingBlock(nn.Module):
-    def __init__(self, hidden_dim=64) -> None:
-        super(MessagePassingBlock, self).__init__()
-        self.message = nn.Conv1d(1, hidden_dim, 7, padding='same')
-        self.act = nn.ReLU()
-        self.aggregate = nn.Conv1d(2 * hidden_dim, 1, 1, padding='same')
-
-    def forward(self, x):
-        '''
-        x: 1 x n
-        '''
-        x_message = self.message(x) # h x n
-        aggr_msg = torch.sum(x_message, 1)
-        aggr_msg = torch.stack([aggr_msg for _ in range(x_message.shape[1])], 1)
-        x = torch.cat([x_message, aggr_msg], 0)
-        x = self.aggregate(x)        
-        x = self.act(x)
-        return x
-
-class ReadoutBlock(nn.Module):
-    def __init__(self) -> None:
-        super(ReadoutBlock, self).__init__()
-    
-    def forward(self, x):
-        return torch.mean(x)

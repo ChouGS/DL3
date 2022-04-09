@@ -40,30 +40,37 @@ for e in range(EPOCH):
     for i, data in enumerate(dataloader):
         z = torch.randn(BSIZE, 2)
 
-        # forward
+        # generator forward
         x_gen = G_model(z)
 
-        # loss calculation
+        # discriminator iters
         for _ in range(D_ITER):
+            # discriminator forward
             p_true = D_model(data)
             p_false = D_model(x_gen)
             
+            # CE loss
             disc_ce_loss = -torch.mean(torch.log(p_true)) - torch.mean(torch.log(1 - p_false))
 
+            # discriminator backward
             D_optim.zero_grad()
             disc_ce_loss.backward(retain_graph=True)
             D_optim.step()
+
+            # discriminator logging
             d_loss.append(disc_ce_loss.item())
         
+        # generator loss
         p_false = D_model(x_gen)
         gen_loss = torch.mean(torch.log(1 - p_false))
 
+        # generator backward
         G_optim.zero_grad()
         gen_loss.backward()
         G_optim.step()
         g_loss.append(gen_loss.item())
 
-        # print status
+        # generator logging
         print(f'Epoch {e} {i * BSIZE}/{len(dataset)}:', 
               f'G_loss={round(gen_loss.item(), 4)},',
               f'D_loss={round(disc_ce_loss.item(), 4)}')
@@ -77,6 +84,8 @@ y2 = np.array(g_loss)
 plot.figure()
 plot.plot(x1, y1, 'b-')
 plot.plot(x2, y2, 'g-')
+plot.xlabel('Iter')
+plot.ylabel('Loss_val')
 plot.legend(['Discriminator loss', 'Generator loss'])
 plot.savefig('GAN/loss.png')
 

@@ -9,6 +9,7 @@ class SlicedWSLoss(nn.Module):
         self.n_slices = n_slices
 
     def forward(self, x, y):
+        # Sliced wasserstein loss - implemented as in the slides
         SW_loss_val = 0
         proj_angle = torch.rand(self.n_slices) * 2 * torch.pi
         proj_vec = torch.cat([torch.cos(proj_angle).unsqueeze(1), 
@@ -28,5 +29,7 @@ class VAE_KL_loss(nn.Module):
     def __init__(self) -> None:
         super(VAE_KL_loss, self).__init__()
         
-    def forward(self, mu, sigma):
-        return 0.5 * torch.sum(torch.exp(sigma) + torch.square(mu) - 1 - sigma)
+    def forward(self, mu, gamma):
+        # KL-divergence between N(mu, sigma^2) and a standard normal distribution
+        # Here gamma = log(sigma^2)
+        return 0.5 * torch.sum(torch.exp(gamma) + torch.square(mu) - 1 - gamma)
