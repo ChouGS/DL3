@@ -14,7 +14,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 # Hyperparameters
 N = 2500            # Number of data points
-EPOCH = 200         # Number of epochs
+EPOCH = 1000         # Number of epochs
 BSIZE = 100         # Batch size
 EPS = 0.05
 
